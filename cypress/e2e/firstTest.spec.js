@@ -23,7 +23,7 @@ describe('test with backend', () => {
     })
   })
 
-  it.only('intercepting and modifying request and response', () => {
+  it('intercepting and modifying request and response', () => {
     cy.contains('New Article').click()
 
     // cy.intercept('POST', '**/articles', (req) => {
@@ -73,5 +73,59 @@ describe('test with backend', () => {
     })
 
     cy.get('app-article-list button').eq(1).click().should('contain', '6')
+  })
+
+  it.only('delete a new article in global feed', () => {
+    // cy.intercept('GET', '**/articles/feed*', {"articles":[],"articlesCount":0}).as('globalFeed')
+    // cy.intercept('GET', '**/articles*', {fixture: 'articles.json'})
+    // cy.contains('Global Feed').click()
+
+    // cy.get('.article-preview').first().click()
+    // cy.get('.article-actions').contains('Delete Article').click()
+    const userCredentials = {
+      "user": {
+        "email": Cypress.env('USER'),
+        "password": Cypress.env('PASSWORD')
+      }
+    }
+
+    cy.request('POST', 'https://conduit-api.bondaracademy.com/api/users/login', userCredentials).its('body').then(body => {
+      const token = body.user.token;
+      const dynamicTitle = Math.floor(Math.random() * 1000)
+      const bodyRequest = {
+        "article": {
+          "title": "Request From API" + dynamicTitle,
+          "description": "Api Testing",
+          "body": "This is the body of the article",
+          "tagList": ["cypress", "automation", "testing"]
+        }
+      }
+      console.log(token)
+      cy.request({
+        method: 'POST',
+        url: 'https://conduit-api.bondaracademy.com/api/articles/',
+        headers: {
+          'Authorization': `Token ${token}`
+        },
+        body: bodyRequest,
+      }).then(response => {
+        expect(response.status).to.equal(201)
+      })
+
+      cy.contains('Global Feed').click()
+      cy.get('.article-preview').contains(dynamicTitle).click()
+      cy.get('.article-actions').contains('Delete Article').click()
+
+      cy.request({
+        method: 'GET',
+        url: 'https://conduit-api.bondaracademy.com/api/articles?limit=10&offset=0',
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      }).its('body').then(body => {
+        console.log("aaaabody", body)
+        //expect(body.articles[0].title).not.to.equal('Request From API')
+      })
+    })
   })
 })
