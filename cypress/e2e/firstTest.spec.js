@@ -23,10 +23,29 @@ describe('test with backend', () => {
     })
   })
 
-  it.only('verrify popular tags are displayed', () => {
+  it('verrify popular tags are displayed', () => {
     cy.get('.tag-list')
       .should('contain', 'cypress')
       .and('contain', 'automation')
       .and('contain', 'testing')
+  })
+
+  it.only('verrify global feed likes count', () => {
+    cy.intercept('GET', '**/articles/feed*', {"articles":[],"articlesCount":0}).as('globalFeed')
+    cy.intercept('GET', '**/articles*', {fixture: 'articles.json'})
+    cy.contains('Global Feed').click()
+
+    cy.get('app-article-list button').then(heartsCount => {
+      expect(heartsCount[0]).to.contain('1')
+      expect(heartsCount[1]).to.contain('2')
+    })
+
+    cy.fixture('articles').then(file => {
+      const articleLink = file.articles[1].slug
+      file.articles[1].favoritesCount = 6
+      cy.intercept('POST', '**/articles/'+articleLink+'/favorite', file)
+    })
+
+    cy.get('app-article-list button').eq(1).click().should('contain', '6')
   })
 })
