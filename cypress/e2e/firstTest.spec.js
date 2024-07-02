@@ -1,5 +1,7 @@
 describe('test with backend', () => {
+  
   beforeEach('login to app', () => {
+    cy.intercept('GET', '**/tags', {fixture: 'tags.json'})// intercepting the request to the tags endpoint and returning the fixture
     cy.loginToApplication()
   })
 
@@ -19,5 +21,12 @@ describe('test with backend', () => {
       expect(xhr.request.body.article.body).to.equal('This is the body of the article')
       expect(xhr.response.body.article.description).to.equal('This is the description')
     })
+  })
+
+  it.only('verrify popular tags are displayed', () => {
+    cy.get('.tag-list')
+      .should('contain', 'cypress')
+      .and('contain', 'automation')
+      .and('contain', 'testing')
   })
 })
