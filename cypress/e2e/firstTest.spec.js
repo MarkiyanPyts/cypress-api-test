@@ -1,7 +1,7 @@
 describe('test with backend', () => {
   
   beforeEach('login to app', () => {
-    cy.intercept('GET', '**/tags', {fixture: 'tags.json'})// intercepting the request to the tags endpoint and returning the fixture
+    cy.intercept({method: 'GET', path: 'tags'}, {fixture: 'tags.json'})// intercepting the request to the tags endpoint and returning the fixture
     cy.loginToApplication()
   })
 
@@ -23,14 +23,14 @@ describe('test with backend', () => {
     })
   })
 
-  it('verrify popular tags are displayed', () => {
+  it.only('verrify popular tags are displayed', () => {
     cy.get('.tag-list')
       .should('contain', 'cypress')
       .and('contain', 'automation')
       .and('contain', 'testing')
   })
 
-  it.only('verrify global feed likes count', () => {
+  it('verrify global feed likes count', () => {
     cy.intercept('GET', '**/articles/feed*', {"articles":[],"articlesCount":0}).as('globalFeed')
     cy.intercept('GET', '**/articles*', {fixture: 'articles.json'})
     cy.contains('Global Feed').click()
