@@ -23,7 +23,33 @@ describe('test with backend', () => {
     })
   })
 
-  it.only('verrify popular tags are displayed', () => {
+  it.only('intercepting and modifying request and response', () => {
+    cy.contains('New Article').click()
+
+    // cy.intercept('POST', '**/articles', (req) => {
+    //   req.body.article.description = 'This is the description 2'
+    // }).as('postArticles')
+    cy.intercept('POST', '**/articles', (req) => {
+      req.reply(res => {
+        expect(res.body.article.description).to.equal('This is the description')
+        res.body.article.description = 'This is the description 2'
+      })
+    }).as('postArticles')
+
+    cy.get('[formcontrolname=title]').type('This is the markiyan8 title')
+    cy.get('[formcontrolname=description]').type('This is the description')
+    cy.get('[formcontrolname=body]').type('This is the body of the article')
+    cy.contains('Publish Article').click()
+
+    cy.wait('@postArticles').then(xhr => {
+      console.log(xhr)
+      expect(xhr.response.statusCode).to.equal(201)
+      expect(xhr.request.body.article.body).to.equal('This is the body of the article')
+      expect(xhr.response.body.article.description).to.equal('This is the description 2')
+    })
+  })
+
+  it('verrify popular tags are displayed', () => {
     cy.get('.tag-list')
       .should('contain', 'cypress')
       .and('contain', 'automation')
